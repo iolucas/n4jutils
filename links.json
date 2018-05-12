@@ -1,0 +1,19 @@
+{
+    "links":[
+        {
+            "origin": "node1",
+            "target": "node2",
+            "d1":123
+        },
+        {
+            "origin": "node2",
+            "target": "node1",
+            "d1":444
+        },
+        {
+            "origin": "node2",
+            "target": "node2",
+            "d1":333
+        }
+    ]
+}
