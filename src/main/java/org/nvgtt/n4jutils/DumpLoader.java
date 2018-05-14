@@ -53,9 +53,13 @@ public class DumpLoader {
 		try {
 			
 			JSONArray nodes = (JSONArray) readJsonFile(nodesFilePath).get("nodes");
-			JSONArray links = (JSONArray) readJsonFile(linksFilePath).get("links");
+			//JSONArray links = (JSONArray) readJsonFile(linksFilePath).get("links");
+			LineReader links = new LineReader(linksFilePath);
 						
 			BatchInserter inserter = BatchInserters.inserter(new File(dbFilePath));
+			
+			int nodesDone = 0;
+			int nodesToGo = nodes.size();
 			
 			//Fill nodes
 			for(Object nodeObj : nodes) {
@@ -64,23 +68,42 @@ public class DumpLoader {
 				long nodeId = inserter.createNode(nodeProperties, Labels.Article);
 				
 				inMemoryIndex.put((String) node.get("id"), nodeId);
+				
+				nodesDone++;
+				print("Nodes done: " + nodesDone + "/" + nodesToGo);
 			}
 			
+			int linksDone = 0;
+			//int linksToGo = links.size();
+			
 			//Fill links
-			for(Object linkObj : links) {
+			for(String linkStr : links) {
+				if (linkStr == "")
+					continue;
+				
+				String[] linkObj = linkStr.split("\t\t");
+				String origin = linkObj[0];
+				String target = linkObj[1];
+				String weight = linkObj[2];
+				
 				try {
 					
-					JSONObject link = (JSONObject) linkObj;
-					HashMap<String, Object> linkProperties = JSONToHashMap(link);
+					//JSONObject link = (JSONObject) linkObj;
+					HashMap<String, Object> linkProperties = new HashMap<String, Object>();
 					
-					long originId = inMemoryIndex.get(link.get("origin"));
-					long targetId = inMemoryIndex.get(link.get("target"));
+					linkProperties.put("weight", Integer.parseInt(weight));
+					
+					long originId = inMemoryIndex.get(origin);
+					long targetId = inMemoryIndex.get(target);
 					
 					inserter.createRelationship(originId, targetId, Relations.Needs, linkProperties);
 				}
 				catch(Exception e) {
 					print(e.toString());
 				}
+				
+				linksDone++;
+				print("Links done: " + linksDone);
 			}
 			
 			inserter.shutdown();
